@@ -24,6 +24,8 @@ import base.Srv;
  */
 public class Server extends UnicastRemoteObject implements Srv {
 
+	private static final long serialVersionUID = 4333568576579343572L;
+	
 	/**
 	 * players - list of registered players
 	 */

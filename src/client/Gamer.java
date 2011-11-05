@@ -126,13 +126,13 @@ public class Gamer extends UnicastRemoteObject implements Player {
 
 	@Override
 	public boolean gotLonely() throws RemoteException {
-		if (game != null) {
+		if (game != null)
 			if (game.canceled()) {
+				// TODO: move endTimes to server
 				game.endTimes();
 				game = null;
 				return true;
 			}
-		}
 		return false;
 	}
 
