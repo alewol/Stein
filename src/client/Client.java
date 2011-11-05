@@ -424,6 +424,7 @@ public class Client extends Shell {
 									}
 									
 									if (p.gotLonely()) {
+										// TODO: null left the building
 										errorPopup(p.opponent() + " left the building.");
 										composite_1.dispose();
 										try {

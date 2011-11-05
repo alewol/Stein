@@ -92,7 +92,7 @@ public class Server extends UnicastRemoteObject implements Srv {
 	public Game loadGame(String opponent, String name) throws RemoteException {
 		String title = title(opponent, name);
 		Play game = games.get(title);
-		if (game != null) {
+		if (game == null) {
 			game = new Play(players.get(opponent), players.get(name));
 			games.put(title, game);
 			System.out.println("New game: " +title);
