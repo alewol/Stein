@@ -1,13 +1,9 @@
 package client;
 
-import java.awt.Component;
 import java.net.MalformedURLException;
-import java.rmi.ConnectException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseAdapter;
@@ -31,7 +27,6 @@ import org.eclipse.wb.swt.SWTResourceManager;
 
 public class Client extends Shell {
 
-	private Registry registry;
 	private Composite composite;
 	private Text userName;
 	private Label lblWelcomeToStein;

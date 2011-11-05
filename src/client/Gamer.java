@@ -61,7 +61,7 @@ public class Gamer extends UnicastRemoteObject implements Player {
 
 	@Override
 	public void newGame(String opponent) throws RemoteException {
-		game = server.createGame(opponent, name);
+		game = server.loadGame(opponent, name);
 		System.out.println(game.title());
 	}
 
@@ -91,7 +91,7 @@ public class Gamer extends UnicastRemoteObject implements Player {
 	@Override
 	public boolean isChallenged() throws RemoteException {
 		if (!challengeReceived) return false;
-		game = server.getGame(name, challenger);
+		game = server.loadGame(name, challenger);
 		challengeReceived = false;
 		return true;
 	}
