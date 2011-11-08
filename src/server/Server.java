@@ -34,6 +34,10 @@ public class Server extends UnicastRemoteObject implements Srv {
 	 * games - list of initiated games 
 	 */
 	public Hashtable<String,Play> games;
+	/**
+	 * playercount - number of players registered
+	 */
+	private int playercount = 0;
 	
 	
 	/**
@@ -50,7 +54,7 @@ public class Server extends UnicastRemoteObject implements Srv {
 	}
 
 	/**
-	 * Create a Server instance, bind to SERVICE_NAME and start the Action thread.
+	 * Create a Server instance, and bind it to the RMI registry SERVICE_NAME.
 	 *   
 	 * @param args	No arguments expected or handled.
 	 */
@@ -59,7 +63,6 @@ public class Server extends UnicastRemoteObject implements Srv {
 			Server s = new Server();
 			LocateRegistry.createRegistry(1099);
 			Naming.rebind(SERVICE_NAME, s);
-			new Action(s).run();
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		} catch (MalformedURLException e) {
@@ -70,10 +73,22 @@ public class Server extends UnicastRemoteObject implements Srv {
 	/* (non-Javadoc)
 	 * @see base.Srv#getPlayers()
 	 */
-	@Override
-	public Object[] getPlayers(){
-		Object[] u = players.values().toArray();
-		return u;
+	public Object[] getPlayers() {
+		return players.values().toArray();
+	}
+	
+	/**
+	 * @param except	which player to not annouce
+	 * @throws RemoteException
+	 */
+	private void announce(String except) throws RemoteException{
+		Object[] list = getPlayers();
+		if(list.length != 0)
+			for(int i=0; i<list.length; i++){
+				Player p = (Player)list[i];
+				if (!p.name().equals(except))
+					p.announce();
+			}
 	}
 	
 	/* (non-Javadoc)
@@ -81,8 +96,17 @@ public class Server extends UnicastRemoteObject implements Srv {
 	 */
 	@Override
 	public void register(Player p) throws RemoteException {
+		if (players.containsKey(p.name()))
+			throw new RemoteException("A player by that name is already present.");
 		players.put(p.name(), p);
+		announce(p.name());
 		System.out.println(p.name() + " joined.");
+	}
+	
+	@Override
+	public void leave(Player p) throws RemoteException {
+		System.out.println(p.name() + " left.");
+		players.remove(p.name());
 	}
 
 	/* (non-Javadoc)
@@ -100,8 +124,11 @@ public class Server extends UnicastRemoteObject implements Srv {
 		return game;
 	}
 	
+	/* (non-Javadoc)
+	 * @see base.Srv#endGame(base.Game)
+	 */
 	@Override
-	public void endGame(Game game) throws RemoteException {
+	public void remove(Game game) throws RemoteException {
 		games.remove(game.title());
 	}
 	

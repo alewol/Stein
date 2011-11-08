@@ -15,19 +15,19 @@ public interface Srv extends Remote {
 	public static final String SERVICE_NAME = "SteinEngine";
 	 
 	 /**
-	  * Register a {@link Player} by name.
-	 * @param p		player's name
+	  * Register a {@link Player} at the Server.
+	 * @param p		Player
 	 * @throws RemoteException
 	 */
 	 public void register(Player p) throws RemoteException;
 
 	 /**
-	 * Get array of players.
-	 * @return Object[]	array of {@link Player} objects
+	  * Remote a {@link Player} from the Server
+	 * @param p
 	 * @throws RemoteException
 	 */
-	 public Object[] getPlayers() throws RemoteException;
-
+	public void leave(Player p) throws RemoteException;
+	 
 	 /**
 	 * Load a game at the server.
 	 * @param opponent	opponent's name
@@ -37,11 +37,13 @@ public interface Srv extends Remote {
 	 */
 	 public Game loadGame(String opponent, String name) throws RemoteException;
 
+	 public Object[] getPlayers() throws RemoteException;
+	 
 	 /**
 	  * End a game at the server.
 	 * @param game
 	 */
-	public void endGame(Game game) throws RemoteException;
+	public void remove(Game game) throws RemoteException;
 	
 	
 }

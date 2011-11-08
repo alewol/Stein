@@ -1,6 +1,7 @@
 package client;
 
 import java.net.MalformedURLException;
+import java.rmi.ConnectException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -10,6 +11,7 @@ import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -51,6 +53,8 @@ public class Client extends Shell {
 	private Label lblWins;
 	private Label lblDraws;
 	private Label lblDefeats;
+	private static Cursor cursor = new Cursor(display, SWT.CURSOR_ARROW);
+	private static Cursor cursor_busy = new Cursor(display, SWT.CURSOR_WAIT);
 	
 	/**
 	 * Launch the application.
@@ -60,6 +64,7 @@ public class Client extends Shell {
 		try {
 			Display display = Display.getDefault();
 			Client shell = new Client(display);
+			shell.setCursor(cursor);
 			shell.open();
 			shell.layout();
 			while (!shell.isDisposed()) {
@@ -67,6 +72,7 @@ public class Client extends Shell {
 					display.sleep();
 				}
 			}
+			System.exit(0);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -82,10 +88,7 @@ public class Client extends Shell {
 	public Client(Display disp) throws RemoteException, MalformedURLException, NotBoundException {
 		super(disp, SWT.SHELL_TRIM);
 		display = disp;
-		server = (Srv)Naming.lookup("SteinEngine");
-		
 		System.out.println("Started");
-		
 		
 		list = new List(this, SWT.BORDER);
 		list.setEnabled(true);
@@ -142,30 +145,47 @@ public class Client extends Shell {
 		btnJoinGame.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent event) {
-				String name = userName.getText();
+				final String name = userName.getText();
 				status.setText("Connecting");
-				try {
-					// Create a new Player
-					player = new Gamer(name, server);
-					
-					// Start Thread to update player list
-					updateList(player, list).start();
-					
-					// Dispose the register view
-					composite.dispose();
-					
-					// Load the game view
-					LoadNewGamePane();
-					status.setText("Game on!"); 
-				} 
-				catch (Exception e) {
-					errorPopup("Serious error! Contact the author of this lousy game!");
-					display.dispose();
-					e.printStackTrace();
-				}
-			}
-
-			
+				
+				composite.setCursor(cursor_busy);
+				display.asyncExec(new Runnable() {
+					public void run() {
+						try {
+							// Connect to Server TODO: localhost?
+							server = (Srv)Naming.lookup("SteinEngine");
+							
+							// Create a new Player
+							player = new Gamer(name, server, getShell(), display);
+		
+							// Update player list
+							updateList();
+							
+							// Dispose the register view
+							composite.dispose();
+							
+							// Load the game view
+							LoadNewGamePane();
+							status.setText("Game on!");
+						}
+						catch (ConnectException ce) {
+							errorPopup("Unable to find the Server specified.");
+							status.setText("Is the Server running?");
+							composite.setCursor(cursor);
+						} 
+						catch (RemoteException ce) {
+							errorPopup(ce.detail.getMessage());
+							status.setText("Choose a different name.");
+							composite.setCursor(cursor);
+						}
+						catch (Exception e) {
+							errorPopup("Serious error! Contact the author of this lousy game!");
+							display.dispose();
+							e.printStackTrace();
+						}
+					}
+				});
+			};
 		});
 		btnJoinGame.setText("Join Game");
 	}
@@ -174,6 +194,7 @@ public class Client extends Shell {
 	{	
 		composite_2 = new Composite(this, SWT.NONE);
 		composite_2.setBounds(9, 10, 235, 221);
+		composite_2.setCursor(cursor);
 
 		btnPlay = new Button(composite_2, SWT.NONE);
 		btnPlay.setToolTipText("You have to choose a player!");
@@ -199,10 +220,10 @@ public class Client extends Shell {
 		lblChooseAPlayer.setBounds(10, 98, 215, 50);
 		lblChooseAPlayer.setText("Choose a player from the list!");
 
-
-		// Choose a player from the list of players
-		list.addMouseListener(new MouseAdapter() {
-			
+		/**
+		 *  Choose a player from the list of players
+		 */
+		list.addMouseListener(new MouseAdapter() {	
 			@Override
 			public void mouseUp(MouseEvent e) {
 				if (list.getSelection().length != 0)
@@ -210,7 +231,9 @@ public class Client extends Shell {
 				else
 					return;
 
-				// Enable gameplay, when other user is selected.
+				/*
+				 *  Enable gameplay, when other user is selected.
+				 */
 				try {
 					if (selected.equals(player.name())) {
 						status.setText("Schizophrenia?");
@@ -227,7 +250,9 @@ public class Client extends Shell {
 			}
 		});
 
-		// Start a game with the selected player
+		/*
+		 *  Start a game with the selected player
+		 */
 		btnPlay.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -277,47 +302,17 @@ public class Client extends Shell {
 		btnCancel.setText("Cancel");
 
 		btnRock = new Button(composite_1, SWT.NONE);
-		btnRock.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				gameButtonsSwitch(false);
-				try {
-					player.move("Rock");
-				} catch (RemoteException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
+		addButtonMove(btnRock, "Rock");
 		btnRock.setBounds(0, 196, 75, 25);
 		btnRock.setText("Rock");
 
 		btnScissors = new Button(composite_1, SWT.NONE);
-		btnScissors.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				gameButtonsSwitch(false);
-				try {
-					player.move("Scissors");
-				} catch (RemoteException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
+		addButtonMove(btnScissors, "Scissors");
 		btnScissors.setBounds(0, 0, 75, 25);
 		btnScissors.setText("Scissors");
 
 		btnPaper = new Button(composite_1, SWT.NONE);
-		btnPaper.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				gameButtonsSwitch(false);
-				try {
-					player.move("Paper");
-				} catch (RemoteException e1) {
-					e1.printStackTrace();
-				}
-			}
-		});
+		addButtonMove(btnPaper, "Paper");
 		btnPaper.setBounds(155, 0, 75, 25);
 		btnPaper.setText("Paper");
 		
@@ -337,6 +332,26 @@ public class Client extends Shell {
 		lblDefeats.setBounds(153, 58, 75, 15);
 	}
 	
+	
+	/**
+	 * Add a player move listener to the given button
+	 * @param btn
+	 * @param move
+	 */
+	private void addButtonMove(Button btn, final String move) {
+		btn.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				gameButtonsSwitch(false);
+				try {
+					player.move(move);
+				} catch (RemoteException e1) {
+					e1.printStackTrace();
+				}
+			}
+		});
+	}
+	
 	/*
 	 * Load the welcome label
 	 * @param composite
@@ -351,7 +366,7 @@ public class Client extends Shell {
 	}
 	
 	/*
-	 * Disable all buttons from game pane
+	 * Toggle all buttons in game pane
 	 */
 	public void gameButtonsSwitch(boolean on){
 		btnRock.setEnabled(on);
@@ -361,7 +376,7 @@ public class Client extends Shell {
 	}
 	
 	/*
-	 * Display error message at crash.
+	 * Display error Popup message
 	 */
 	private void errorPopup(String message)
 	{
@@ -372,79 +387,53 @@ public class Client extends Shell {
 	}
 	
 
+
 	/*
 	 * Leave the game, close the window
 	 */
 	public void quit()
-	{
-		// TODO leave server
-//		try {
-//			if (client != null)
-//				client.Leave();
-//		} 
-//		catch (Exception e) { e.printStackTrace(); }
+	{//TODO: fixup
+		try {
+			server.leave(player);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+//		server = null;
+//		player = null;
 		this.close();
+//		this.dispose();
+//		display.close();
+//		System.exit(0);
 	}
 	
-	@Override
 	protected void checkSubclass() {
 		// Disable the check that prevents subclassing of SWT components
 	}
 
-	private Thread updateList(final Player p, final List l) {
-		return new Thread() {
-			public void run() {
-				while(true) {
-					try {
-						Thread.sleep(100);
-						display.asyncExec(new Runnable() {
-							public void run() {
-								try {
-									// Check if the user list has changed, update
-									if (p.isChanged()) {
-										l.removeAll();
-										Object[] gamers = server.getPlayers();
-										for(int i=0; i<gamers.length; i++){
-											Player g = (Player)gamers[i];
-											l.add(g.name());
-										}
-									}
-									
-									// Check if player is challenged, update
-									if (p.isChallenged()) {
-										LoadGamePane();
-									}
-									
-									// Check if game round is ended, update
-									if (p.roundFinished()) {
-										gameButtonsSwitch(true);
-										lblWins.setText(p.wins() + " wins");
-										lblDraws.setText(p.draws() + " draws");
-										lblDefeats.setText(p.defeats() + " defeats");
-									}
-									
-									if (p.gotLonely()) {
-										// TODO: null left the building
-										errorPopup(p.opponent() + " left the building.");
-										composite_1.dispose();
-										try {
-											player.withdraw();
-										} catch (RemoteException e1) {
-											e1.printStackTrace();
-										}
-										LoadNewGamePane();
-									}
-										
-								} catch (RemoteException e) {
-									e.printStackTrace();
-								}
-							}
-						});
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		};
+	
+	/**
+	 * Update list of players
+	 * @throws RemoteException
+	 */
+	public void updateList() throws RemoteException {
+		list.removeAll();
+		Object[] gamers = server.getPlayers();
+		for(int i=0; i<gamers.length; i++){
+			Player g = (Player)gamers[i];
+			list.add(g.name());
+		}
+	}
+	
+	//TODO: cleanup
+	public void statusUpdate() throws RemoteException {
+		lblWins.setText(player.wins() + " wins");
+		lblDraws.setText(player.draws() + " draws");
+		lblDefeats.setText(player.defeats() + " defeats");
+	}
+	
+	public void opponentLeft() throws RemoteException {
+		errorPopup(player.opponent() + " left the building.");
+		composite_1.dispose();
+		LoadNewGamePane();
 	}
 }
