@@ -25,15 +25,12 @@ public class Play extends UnicastRemoteObject implements Game {
 	private String title;
 	private String owM = null;
 	private String opM = null;
-	private boolean ongoingRound;
-	private boolean gameOver;
 
 	protected Play(Player _opponent, Player _owner) throws RemoteException {
 		opponent = _opponent;
 		owner = _owner;
 		setTitle();
 		opponent.challenge(owner.name());
-		ongoingRound=true;
 	}
 
 	@Override
@@ -62,7 +59,6 @@ public class Play extends UnicastRemoteObject implements Game {
 
 	@Override
 	public void move(String name, String move) throws RemoteException {
-		ongoingRound=true;
 		if (owner.name().equals(name))
 			owM = move;
 		if (opponent.name().equals(name))
@@ -81,7 +77,9 @@ public class Play extends UnicastRemoteObject implements Game {
 					opponentWins++;
 			
 			// Round finished
-			ongoingRound=false;
+			// TODO: update Players
+			owner.gameUpdate();
+			opponent.gameUpdate();
 			owM = opM = null;
 		}
 	}
@@ -90,11 +88,6 @@ public class Play extends UnicastRemoteObject implements Game {
 	public boolean amIstupid(String name) throws RemoteException {
 		System.out.println(name);
 		return owner.name().equals(name);
-	}
-
-	@Override
-	public boolean finished() throws RemoteException {
-		return !ongoingRound;
 	}
 
 	@Override
@@ -117,19 +110,11 @@ public class Play extends UnicastRemoteObject implements Game {
 	}
 
 	@Override
-	public void withdraw() throws RemoteException {
-		gameOver=true;
-	}
-	
-	@Override
-	public boolean canceled() throws RemoteException {
-		return gameOver;
-	}
-
-	@Override
-	public void endTimes() {
-		System.out.println(title + " terminated.");
-		owner = opponent = null;
+	public void withdraw(String name) throws RemoteException {
+		if (owner.name().equals(name))
+			opponent.endGame();
+		else
+			owner.endGame();
 	}
 
 }
