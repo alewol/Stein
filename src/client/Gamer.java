@@ -6,6 +6,9 @@ package client;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Shell;
+
 import base.Game;
 import base.Player;
 import base.Srv;
@@ -20,18 +23,18 @@ public class Gamer extends UnicastRemoteObject implements Player {
 
 	private String name;
 	private Srv server;
-	private boolean listHasChanged;
 	private Game game;
-	private boolean challengeReceived = false;
-
+	private Client shell;
+	private Display display;
 	private String challenger;
 	
-	protected Gamer(String _name, Srv srv) throws RemoteException {
+	protected Gamer(String _name, Srv srv, Shell _shell, Display _display) throws RemoteException {
 		name = _name;
 		server = srv;
+		shell = (Client) _shell;
+		display = _display;
 		server.register(this);
-		listHasChanged = true;
-		System.out.println("regd!");
+		System.out.println("Registered at Server.");
 	}
 
 	/* (non-Javadoc)
@@ -49,19 +52,20 @@ public class Gamer extends UnicastRemoteObject implements Player {
 
 	@Override
 	public void announce() throws RemoteException {
-		listHasChanged = true;
-	}
-
-	@Override
-	public boolean isChanged() throws RemoteException {
-		if (!listHasChanged) return false;
-		listHasChanged = false;
-		return true;
+		display.asyncExec(new Runnable() {
+			public void run() {
+				try {
+					shell.updateList();
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 
 	@Override
 	public void newGame(String opponent) throws RemoteException {
-		game = server.createGame(opponent, name);
+		game = server.loadGame(opponent, name);
 		System.out.println(game.title());
 	}
 
@@ -84,23 +88,31 @@ public class Gamer extends UnicastRemoteObject implements Player {
 
 	@Override
 	public void challenge(String attacker) throws RemoteException {
-		challengeReceived = true;
 		challenger = attacker;
-	}
-
-	@Override
-	public boolean isChallenged() throws RemoteException {
-		if (!challengeReceived) return false;
-		game = server.getGame(name, challenger);
-		challengeReceived = false;
-		return true;
+		display.asyncExec(new Runnable() {
+			public void run() {
+				try {
+					game = server.loadGame(name, challenger);
+					shell.LoadGamePane();
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 	
 	@Override
-	public boolean roundFinished() throws RemoteException {
-		if (game != null)
-			return game.finished();
-		return false;
+	public void gameUpdate() throws RemoteException {
+		display.asyncExec(new Runnable() {
+			public void run() {
+				try {
+					shell.gameButtonsSwitch(true);
+					shell.statusUpdate();
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 
 	@Override
@@ -120,20 +132,21 @@ public class Gamer extends UnicastRemoteObject implements Player {
 
 	@Override
 	public void withdraw() throws RemoteException {
-		if (game != null) game.withdraw();
-		game = null;
+		game.withdraw(name);
+		server.remove(game);
 	}
-
+	
 	@Override
-	public boolean gotLonely() throws RemoteException {
-		if (game != null) {
-			if (game.canceled()) {
-				game.endTimes();
-				game = null;
-				return true;
+	public void endGame() throws RemoteException {
+		display.asyncExec(new Runnable() {
+			public void run() {
+				try {
+					shell.opponentLeft();
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
 			}
-		}
-		return false;
+		});
 	}
 
 }

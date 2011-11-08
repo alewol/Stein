@@ -1,6 +1,3 @@
-/**
- * 
- */
 package server;
 
 import java.rmi.RemoteException;
@@ -8,8 +5,10 @@ import java.rmi.RemoteException;
 import base.Player;
 
 /**
+ * Watches the given Server for game action.
+ * 
  * @author 490193
- *
+ * 
  */
 public class Action extends Thread {
 	
