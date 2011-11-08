@@ -37,8 +37,6 @@ public class Server extends UnicastRemoteObject implements Srv {
 	/**
 	 * playercount - number of players registered
 	 */
-	private int playercount = 0;
-	
 	
 	/**
 	 * Constructor for the Server class. Initiates players and games with
