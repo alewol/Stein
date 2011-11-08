@@ -11,9 +11,13 @@ import base.Game;
 import base.Player;
 
 /**
- * @author 490193
- *
- */
+*  Play
+*  
+*  This is where the game rules and everything with the game is.
+*  
+* @author runar & alex
+* @version 1.0
+*/
 public class Play extends UnicastRemoteObject implements Game {
 
 	private static final long serialVersionUID = -4068485307729874645L;
@@ -26,6 +30,14 @@ public class Play extends UnicastRemoteObject implements Game {
 	private String owM = null;
 	private String opM = null;
 
+	
+	/**
+	 * Create a game between two players
+	 * 
+	 * @param _opponent 		opponent's name
+	 * @param _owner 			player's name
+	 * @throws RemoteException
+	 */
 	protected Play(Player _opponent, Player _owner) throws RemoteException {
 		opponent = _opponent;
 		owner = _owner;
@@ -45,6 +57,11 @@ public class Play extends UnicastRemoteObject implements Game {
 		return owner.name();
 	}
 	
+	/**
+	 * Create the name of the game
+	 * 
+	 * @throws RemoteException
+	 */
 	public void setTitle() throws RemoteException {
 		String[] players = {opponent.name(), owner.name()};
 		Arrays.sort(players);
@@ -86,27 +103,26 @@ public class Play extends UnicastRemoteObject implements Game {
 
 	@Override
 	public boolean amIstupid(String name) throws RemoteException {
-		System.out.println(name);
 		return owner.name().equals(name);
 	}
 
 	@Override
-	public String wins(String name) throws RemoteException {
+	public int wins(String name) throws RemoteException {
 		if (owner.name().equals(name))
-			return ""+ownerWins;
-		return ""+opponentWins;
+			return ownerWins;
+		return opponentWins;
 	}
 
 	@Override
-	public String draws(String name) throws RemoteException {
-		return ""+draws;
+	public int draws(String name) throws RemoteException {
+		return draws;
 	}
 
 	@Override
-	public String defeats(String name) throws RemoteException {
+	public int defeats(String name) throws RemoteException {
 		if (owner.name().equals(name))
-			return ""+opponentWins;
-		return ""+ownerWins;
+			return opponentWins;
+		return ownerWins;
 	}
 
 	@Override

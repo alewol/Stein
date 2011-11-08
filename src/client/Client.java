@@ -1,6 +1,7 @@
 package client;
 
 import java.net.MalformedURLException;
+
 import java.rmi.ConnectException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -26,6 +27,15 @@ import server.Server;
 import base.Player;
 import base.Srv;
 import org.eclipse.wb.swt.SWTResourceManager;
+
+/**
+*  Client object
+*  
+*  GUI to connect with the server and create a player and a game
+*  
+* @author runar & alex
+* @version 1.0
+*/
 
 public class Client extends Shell {
 
@@ -118,6 +128,9 @@ public class Client extends Shell {
 
 	}
 
+	/**
+	 * Loading the welcome screen 
+	 */
 	private void LoadWelcomePane() {
 		composite = new Composite(this, SWT.NONE);
 		composite.setBounds(9, 10, 235, 221);
@@ -190,6 +203,9 @@ public class Client extends Shell {
 		btnJoinGame.setText("Join Game");
 	}
 	
+	/**
+	 * Loads the pane to create a game
+	 */
 	public void LoadNewGamePane()
 	{	
 		composite_2 = new Composite(this, SWT.NONE);
@@ -231,7 +247,7 @@ public class Client extends Shell {
 				else
 					return;
 
-				/*
+				/**
 				 *  Enable gameplay, when other user is selected.
 				 */
 				try {
@@ -250,7 +266,7 @@ public class Client extends Shell {
 			}
 		});
 
-		/*
+		/**
 		 *  Start a game with the selected player
 		 */
 		btnPlay.addSelectionListener(new SelectionAdapter() {
@@ -266,8 +282,9 @@ public class Client extends Shell {
 		});
 	}
 	
-	/*
+	/**
 	 * Prepare the game board
+	 * @throws RemoteException
 	 */
 	public void LoadGamePane() throws RemoteException {
 		composite_2.dispose();
@@ -352,7 +369,7 @@ public class Client extends Shell {
 		});
 	}
 	
-	/*
+	/**
 	 * Load the welcome label
 	 * @param composite
 	 */
@@ -365,8 +382,9 @@ public class Client extends Shell {
 		lblWelcomeToStein.setText("Welcome to Stein!");
 	}
 	
-	/*
+	/**
 	 * Toggle all buttons in game pane
+	 * @param on
 	 */
 	public void gameButtonsSwitch(boolean on){
 		btnRock.setEnabled(on);
@@ -375,8 +393,9 @@ public class Client extends Shell {
 		btnCancel.setEnabled(on);
 	}
 	
-	/*
+	/**
 	 * Display error Popup message
+	 * @param message
 	 */
 	private void errorPopup(String message)
 	{
@@ -387,8 +406,7 @@ public class Client extends Shell {
 	}
 	
 
-
-	/*
+	/**
 	 * Leave the game, close the window
 	 */
 	public void quit()
@@ -398,12 +416,7 @@ public class Client extends Shell {
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
-//		server = null;
-//		player = null;
 		this.close();
-//		this.dispose();
-//		display.close();
-//		System.exit(0);
 	}
 	
 	protected void checkSubclass() {
@@ -412,7 +425,7 @@ public class Client extends Shell {
 
 	
 	/**
-	 * Update list of players
+	 * Method to update the list of players
 	 * @throws RemoteException
 	 */
 	public void updateList() throws RemoteException {
@@ -425,12 +438,21 @@ public class Client extends Shell {
 	}
 	
 	//TODO: cleanup
+	
+	/**
+	 * Method to update the score status
+	 * @throws RemoteException
+	 */
 	public void statusUpdate() throws RemoteException {
 		lblWins.setText(player.wins() + " wins");
 		lblDraws.setText(player.draws() + " draws");
-		lblDefeats.setText(player.defeats() + " defeats");
+		lblDefeats.setText(player.defeats() + " defeats");		
 	}
 	
+	/**
+	 * Method to update client when the opponent leaves the game
+	 * @throws RemoteException
+	 */
 	public void opponentLeft() throws RemoteException {
 		errorPopup(player.opponent() + " left the building.");
 		composite_1.dispose();

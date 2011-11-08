@@ -4,9 +4,14 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 
 /**
- * @author runar
- *
- */
+*  Server Interface
+*  
+*  The Srv implements the Stein Server 
+*  
+* @author runar & alex
+* @version 1.0
+*/
+
 public interface Srv extends Remote {
 
 	 /**
@@ -22,7 +27,7 @@ public interface Srv extends Remote {
 	 public void register(Player p) throws RemoteException;
 
 	 /**
-	  * Remote a {@link Player} from the Server
+	  * Remove a {@link Player} from the Server
 	 * @param p
 	 * @throws RemoteException
 	 */
@@ -37,7 +42,13 @@ public interface Srv extends Remote {
 	 */
 	 public Game loadGame(String opponent, String name) throws RemoteException;
 
-	 public Object[] getPlayers() throws RemoteException;
+	 
+	 /**
+	  * Get the players in an array for the list
+	 * @return
+	 * @throws RemoteException
+	 */
+	public Object[] getPlayers() throws RemoteException;
 	 
 	 /**
 	  * End a game at the server.
